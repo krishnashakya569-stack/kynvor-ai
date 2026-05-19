@@ -104,7 +104,7 @@ const sendMessage = async (req, res) => {
 
     const userContentWithContext = [
       latest.content,
-      liveContext ? `\n\nUse this live context when relevant. If the context is insufficient, say what is missing.\n\n${liveContext}` : '',
+      liveContext ? `\n\nUse this live context when relevant. For current-office questions like Chief Minister, answer from the live context and do not use old model memory. If the live context is insufficient, say what is missing.\n\n${liveContext}` : '',
       userContent
         ? Array.isArray(userContent)
           ? ''
@@ -143,4 +143,5 @@ const sendMessage = async (req, res) => {
 };
 
 module.exports = { sendMessage };
+
 

@@ -1,4 +1,5 @@
-﻿const WEATHER_CODE = {
+﻿const { getChiefMinisterContext } = require('./chiefMinisterContext');
+const WEATHER_CODE = {
   0: 'Clear sky', 1: 'Mainly clear', 2: 'Partly cloudy', 3: 'Overcast',
   45: 'Fog', 48: 'Depositing rime fog', 51: 'Light drizzle', 53: 'Moderate drizzle', 55: 'Dense drizzle',
   61: 'Slight rain', 63: 'Moderate rain', 65: 'Heavy rain', 71: 'Slight snow', 73: 'Moderate snow', 75: 'Heavy snow',
@@ -162,6 +163,8 @@ async function buildLiveContext({ text, location }) {
   if (!wantsLiveContext(text)) return '';
 
   const parts = [];
+  const chiefMinisterContext = await getChiefMinisterContext(text);
+  if (chiefMinisterContext) parts.push(chiefMinisterContext);
   if (wantsTime(text)) {
     parts.push(`Current server date/time: ${new Date().toISOString()}. User timezone if known: ${location?.timezone || 'unknown'}.`);
   }
@@ -187,4 +190,5 @@ async function buildLiveContext({ text, location }) {
 }
 
 module.exports = { buildLiveContext };
+
 
