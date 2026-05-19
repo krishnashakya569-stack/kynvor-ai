@@ -2,6 +2,7 @@
 const path = require('path');
 const { buildLiveContext } = require('../utils/liveContext');
 const { resolveChiefMinisterAnswer } = require('../utils/chiefMinisterContext');
+const { buildImageMarkdown } = require('../utils/imageGeneration');
 
 const TEXT_MODEL = 'llama-3.3-70b-versatile';
 const VISION_MODEL = 'meta-llama/llama-4-scout-17b-16e-instruct';
@@ -103,6 +104,9 @@ const sendMessage = async (req, res) => {
     const latest = messages[messages.length - 1];
 
     if (!attachment) {
+      const generatedImage = buildImageMarkdown(latest.content);
+      if (generatedImage) return res.json({ message: generatedImage });
+
       const chiefMinisterAnswer = await resolveChiefMinisterAnswer(latest.content);
       if (chiefMinisterAnswer) return res.json({ message: chiefMinisterAnswer });
     }
@@ -149,6 +153,7 @@ const sendMessage = async (req, res) => {
 };
 
 module.exports = { sendMessage };
+
 
 
 
