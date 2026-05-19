@@ -1,5 +1,6 @@
 ﻿const pdfParse = require('pdf-parse');
 const path = require('path');
+const { buildLiveContext } = require('../utils/liveContext');
 
 const TEXT_MODEL = 'llama-3.3-70b-versatile';
 const VISION_MODEL = 'meta-llama/llama-4-scout-17b-16e-instruct';
@@ -24,15 +25,11 @@ function cleanMessages(messages = []) {
 
 function decodeAttachment(attachment) {
   if (!attachment) return null;
-  if (!attachment.name || !attachment.data) {
-    throw new Error('Attachment is missing a file name or data.');
-  }
+  if (!attachment.name || !attachment.data) throw new Error('Attachment is missing a file name or data.');
 
   const buffer = Buffer.from(attachment.data, 'base64');
   if (!buffer.length) throw new Error('Attachment is empty.');
-  if (buffer.length > MAX_ATTACHMENT_BYTES) {
-    throw new Error('Attachment is too large. Maximum size is 5 MB.');
-  }
+  if (buffer.length > MAX_ATTACHMENT_BYTES) throw new Error('Attachment is too large. Maximum size is 5 MB.');
 
   return {
     ...attachment,
@@ -55,30 +52,21 @@ async function attachmentToPrompt(attachment) {
       model: VISION_MODEL,
       userContent: [
         { type: 'text', text: 'Please analyze the attached image and answer the user request.' },
-        {
-          type: 'image_url',
-          image_url: { url: `data:${mimeType};base64,${attachment.data}` },
-        },
+        { type: 'image_url', image_url: { url: `data:${mimeType};base64,${attachment.data}` } },
       ],
     };
   }
 
   const isText = SUPPORTED_TEXT_TYPES.has(attachment.mimeType) || SUPPORTED_TEXT_EXTENSIONS.has(attachment.extension);
   if (isText) {
-    return {
-      model: TEXT_MODEL,
-      userContent: `Attached file: ${attachment.name}\n\n${attachment.buffer.toString('utf8')}`,
-    };
+    return { model: TEXT_MODEL, userContent: `Attached file: ${attachment.name}\n\n${attachment.buffer.toString('utf8')}` };
   }
 
   if (attachment.mimeType === 'application/pdf' || attachment.extension === '.pdf') {
     const parsed = await pdfParse(attachment.buffer);
     const text = parsed.text?.trim();
     if (!text) throw new Error('The PDF has no extractable text.');
-    return {
-      model: TEXT_MODEL,
-      userContent: `Attached PDF: ${attachment.name}\n\n${text}`,
-    };
+    return { model: TEXT_MODEL, userContent: `Attached PDF: ${attachment.name}\n\n${text}` };
   }
 
   throw new Error('Unsupported file type. Use PNG, JPG, WEBP, PDF, TXT, MD, CSV, or JSON.');
@@ -87,15 +75,8 @@ async function attachmentToPrompt(attachment) {
 async function callGroq({ model, messages }) {
   const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
     method: 'POST',
-    headers: {
-      Authorization: `Bearer ${process.env.GROQ_API_KEY}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      model,
-      temperature: 0.7,
-      messages,
-    }),
+    headers: { Authorization: `Bearer ${process.env.GROQ_API_KEY}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ model, temperature: 0.7, messages }),
   });
 
   const data = await response.json();
@@ -111,33 +92,37 @@ async function callGroq({ model, messages }) {
 
 const sendMessage = async (req, res) => {
   try {
-    if (!process.env.GROQ_API_KEY) {
-      return res.status(500).json({ error: 'GROQ_API_KEY is missing on the backend.' });
-    }
+    if (!process.env.GROQ_API_KEY) return res.status(500).json({ error: 'GROQ_API_KEY is missing on the backend.' });
 
     const messages = cleanMessages(req.body?.messages);
-    if (!messages.length) {
-      return res.status(400).json({ error: 'Please send at least one message.' });
-    }
+    if (!messages.length) return res.status(400).json({ error: 'Please send at least one message.' });
 
     const attachment = decodeAttachment(req.body?.attachment);
     const { model, userContent } = await attachmentToPrompt(attachment);
     const latest = messages[messages.length - 1];
+    const liveContext = await buildLiveContext({ text: latest.content, location: req.body?.location });
+
+    const userContentWithContext = [
+      latest.content,
+      liveContext ? `\n\nUse this live context when relevant. If the context is insufficient, say what is missing.\n\n${liveContext}` : '',
+      userContent
+        ? Array.isArray(userContent)
+          ? ''
+          : `\n\n${userContent}`
+        : '',
+    ].filter(Boolean).join('');
+
+    const finalUserContent = userContent && Array.isArray(userContent)
+      ? [{ type: 'text', text: userContentWithContext }, ...userContent]
+      : userContentWithContext;
 
     const groqMessages = [
       {
         role: 'system',
-        content: 'You are Mitra AI, a helpful, friendly, and intelligent assistant. Use markdown when helpful. Be accurate, clear, and concise.',
+        content: 'You are Mitra AI, a helpful, friendly, and intelligent assistant. Use markdown when helpful. Be accurate, clear, and concise. For live/news/weather/current-affairs questions, rely on provided live context and mention when data was fetched if useful.',
       },
       ...messages.slice(0, -1),
-      {
-        role: 'user',
-        content: userContent
-          ? Array.isArray(userContent)
-            ? [{ type: 'text', text: latest.content }, ...userContent]
-            : `${latest.content}\n\n${userContent}`
-          : latest.content,
-      },
+      { role: 'user', content: finalUserContent },
     ];
 
     const reply = await callGroq({ model, messages: groqMessages });
@@ -147,21 +132,11 @@ const sendMessage = async (req, res) => {
   } catch (error) {
     console.error('Chat error:', error);
 
-    if (error.message?.startsWith('Unsupported file type') ||
-        error.message?.includes('too large') ||
-        error.message?.includes('missing a file name') ||
-        error.message?.includes('empty') ||
-        error.message?.includes('no extractable text')) {
+    if (error.message?.startsWith('Unsupported file type') || error.message?.includes('too large') || error.message?.includes('missing a file name') || error.message?.includes('empty') || error.message?.includes('no extractable text')) {
       return res.status(400).json({ error: error.message });
     }
-
-    if (error.status === 401 || error.status === 403) {
-      return res.status(502).json({ error: 'Groq rejected the API key. Please check GROQ_API_KEY on the backend.' });
-    }
-
-    if (error.status === 429) {
-      return res.status(429).json({ error: 'Mitra AI is busy right now. Please try again in a moment.' });
-    }
+    if (error.status === 401 || error.status === 403) return res.status(502).json({ error: 'Groq rejected the API key. Please check GROQ_API_KEY on the backend.' });
+    if (error.status === 429) return res.status(429).json({ error: 'Mitra AI is busy right now. Please try again in a moment.' });
 
     res.status(500).json({ error: 'Mitra AI could not answer right now. Please try again.' });
   }
