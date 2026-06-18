@@ -1,4 +1,4 @@
-﻿function wantsImageGeneration(text = '') {
+function wantsImageGeneration(text = '') {
   const t = text.toLowerCase();
 
   const imageWords = /(image|picture|photo|wallpaper|poster|logo|artwork|art|illustration|avatar|thumbnail|banner|real image|real photo)/i;

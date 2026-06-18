@@ -1,4 +1,4 @@
-﻿const express = require('express');
+const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
@@ -16,11 +16,11 @@ app.use(morgan('dev'));
 app.use(express.json({ limit: '8mb' }));
 
 app.get('/health', (req, res) => res.json({
-  status: 'Mitra AI is running!',
+  status: 'Kynvor AI is running!',
   provider: 'groq',
   apiKeyConfigured: Boolean(process.env.GROQ_API_KEY),
 }));
 app.use('/api/chat', chatRoutes);
 app.use('/api/transcribe', transcribeRoutes);
 
-app.listen(PORT, () => console.log(`✅ Server running on http://localhost:${PORT}`));
+app.listen(PORT, () => console.log(`? Server running on http://localhost:${PORT}`));

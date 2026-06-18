@@ -1,4 +1,4 @@
-﻿-- Run this in the Supabase SQL editor once.
+-- Run this in the Supabase SQL editor once.
 create extension if not exists pgcrypto;
 
 create table if not exists public.conversations (

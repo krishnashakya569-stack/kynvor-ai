@@ -1,4 +1,4 @@
-﻿const pdfParse = require('pdf-parse');
+const pdfParse = require('pdf-parse');
 const path = require('path');
 const { buildLiveContext } = require('../utils/liveContext');
 const { resolveChiefMinisterAnswer } = require('../utils/chiefMinisterContext');
@@ -129,7 +129,7 @@ const sendMessage = async (req, res) => {
     const groqMessages = [
       {
         role: 'system',
-        content: 'You are Mitra AI, a helpful, friendly, and intelligent assistant. Use markdown when helpful. Be accurate, clear, and concise. For current/latest/news/weather/current-affairs/public-office questions, rely on provided live context instead of memory. If live context contains a PRIORITY CURRENT ANSWER, use that answer. If live context conflicts with older memory, trust live context and mention the date/source timing when useful.',
+        content: 'You are Kynvor AI, a helpful, friendly, and intelligent assistant. Use markdown when helpful. Be accurate, clear, and concise. For current/latest/news/weather/current-affairs/public-office questions, rely on provided live context instead of memory. If live context contains a PRIORITY CURRENT ANSWER, use that answer. If live context conflicts with older memory, trust live context and mention the date/source timing when useful.',
       },
       ...messages.slice(0, -1),
       { role: 'user', content: finalUserContent },
@@ -146,9 +146,9 @@ const sendMessage = async (req, res) => {
       return res.status(400).json({ error: error.message });
     }
     if (error.status === 401 || error.status === 403) return res.status(502).json({ error: 'Groq rejected the API key. Please check GROQ_API_KEY on the backend.' });
-    if (error.status === 429) return res.status(429).json({ error: 'Mitra AI is busy right now. Please try again in a moment.' });
+    if (error.status === 429) return res.status(429).json({ error: 'Kynvor AI is busy right now. Please try again in a moment.' });
 
-    res.status(500).json({ error: 'Mitra AI could not answer right now. Please try again.' });
+    res.status(500).json({ error: 'Kynvor AI could not answer right now. Please try again.' });
   }
 };
 

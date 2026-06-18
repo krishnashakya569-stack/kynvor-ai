@@ -1,4 +1,4 @@
-﻿from fastapi import FastAPI, WebSocket
+from fastapi import FastAPI, WebSocket
 from fastapi.middleware.cors import CORSMiddleware
 import ollama
 import json
@@ -53,7 +53,7 @@ async def websocket_endpoint(websocket: WebSocket):
 
 @app.get("/health")
 async def health():
-    return {"status": "Mitra AI is running!"}
+    return {"status": "Kynvor AI is running!"}
 
 if __name__ == "__main__":
     import uvicorn

@@ -1,4 +1,4 @@
-ï»¿const { getChiefMinisterContext } = require('./chiefMinisterContext');
+const { getChiefMinisterContext } = require('./chiefMinisterContext');
 const WEATHER_CODE = {
   0: 'Clear sky', 1: 'Mainly clear', 2: 'Partly cloudy', 3: 'Overcast',
   45: 'Fog', 48: 'Depositing rime fog', 51: 'Light drizzle', 53: 'Moderate drizzle', 55: 'Dense drizzle',
@@ -72,7 +72,7 @@ async function reverseGeocode(location) {
   try {
     const url = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${encodeURIComponent(location.latitude)}&lon=${encodeURIComponent(location.longitude)}`;
     const response = await fetch(url, {
-      headers: { 'User-Agent': 'MitraAI/1.0 location helper' },
+      headers: { 'User-Agent': 'KynvorAI/1.0 location helper' },
     });
     if (!response.ok) return null;
     const data = await response.json();
@@ -110,9 +110,9 @@ async function getWeather({ text, location }) {
 
   return [
     `Weather for ${target.label} (${Number(target.latitude).toFixed(3)}, ${Number(target.longitude).toFixed(3)})`,
-    `Current: ${current.temperature_2m}Â°C, feels like ${current.apparent_temperature}Â°C, ${WEATHER_CODE[current.weather_code] || 'weather code ' + current.weather_code}.`,
+    `Current: ${current.temperature_2m}°C, feels like ${current.apparent_temperature}°C, ${WEATHER_CODE[current.weather_code] || 'weather code ' + current.weather_code}.`,
     `Humidity: ${current.relative_humidity_2m}%, wind: ${current.wind_speed_10m} km/h, cloud cover: ${current.cloud_cover}%, precipitation: ${current.precipitation} mm.`,
-    daily.time?.[0] ? `Today forecast: high ${daily.temperature_2m_max?.[0]}Â°C, low ${daily.temperature_2m_min?.[0]}Â°C, rain probability ${daily.precipitation_probability_max?.[0]}%.` : '',
+    daily.time?.[0] ? `Today forecast: high ${daily.temperature_2m_max?.[0]}°C, low ${daily.temperature_2m_min?.[0]}°C, rain probability ${daily.precipitation_probability_max?.[0]}%.` : '',
   ].filter(Boolean).join('\n');
 }
 
@@ -152,7 +152,7 @@ async function getNews(text = '') {
     if (!items.length) return 'News requested, but no headlines were returned.';
 
     return `Latest news/current affairs for query "${query}":\n` + items
-      .map((item, index) => `${index + 1}. ${item.title}${item.source ? ` â€” ${item.source}` : ''}${item.published ? ` (${item.published})` : ''}${item.link ? `\n   ${item.link}` : ''}`)
+      .map((item, index) => `${index + 1}. ${item.title}${item.source ? ` — ${item.source}` : ''}${item.published ? ` (${item.published})` : ''}${item.link ? `\n   ${item.link}` : ''}`)
       .join('\n');
   } finally {
     clearTimeout(timer);

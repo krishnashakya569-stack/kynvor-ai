@@ -1,4 +1,4 @@
-ï»¿const STATE_ALIASES = {
+const STATE_ALIASES = {
   'andhra pradesh': 'Andhra Pradesh', 'arunachal pradesh': 'Arunachal Pradesh', assam: 'Assam', bihar: 'Bihar', chhattisgarh: 'Chhattisgarh', delhi: 'Delhi', goa: 'Goa', gujarat: 'Gujarat', haryana: 'Haryana', 'himachal pradesh': 'Himachal Pradesh', jharkhand: 'Jharkhand', karnataka: 'Karnataka', kerala: 'Kerala', 'madhya pradesh': 'Madhya Pradesh', maharashtra: 'Maharashtra', manipur: 'Manipur', meghalaya: 'Meghalaya', mizoram: 'Mizoram', nagaland: 'Nagaland', odisha: 'Odisha', orissa: 'Odisha', puducherry: 'Puducherry', punjab: 'Punjab', rajasthan: 'Rajasthan', sikkim: 'Sikkim', 'tamil nadu': 'Tamil Nadu', 'tamil naidu': 'Tamil Nadu', telangana: 'Telangana', tripura: 'Tripura', 'uttar pradesh': 'Uttar Pradesh', uttarakhand: 'Uttarakhand', 'west bengal': 'West Bengal',
 };
 
@@ -54,7 +54,7 @@ function normalizeCandidate(value = '') {
   return value
     .replace(/^(breaking|watch|video|explained|live)[:\s-]+/i, '')
     .replace(/\b(BJP|TMC|DMK|AIADMK|TVK|Congress|AAP|NDA|INDIA bloc|leader|chief|veteran|actor-politician|politician)\b/gi, '')
-    .replace(/["'â€œâ€â€˜â€™]/g, '')
+    .replace(/["'“”‘’]/g, '')
     .replace(/\s+/g, ' ')
     .trim();
 }
@@ -111,7 +111,7 @@ async function getChiefMinisterContext(text = '') {
         candidate ? `PRIORITY CURRENT ANSWER from latest news headlines: ${candidate}` : 'No single current CM name could be confidently extracted from latest headlines.',
         `Fresh headline query: ${query}`,
         `Recent sources checked:`,
-        ...items.slice(0, 5).map((item, index) => `${index + 1}. ${item.title}${item.source ? ` â€” ${item.source}` : ''}${item.published ? ` (${item.published})` : ''}${item.link ? `\n   ${item.link}` : ''}`),
+        ...items.slice(0, 5).map((item, index) => `${index + 1}. ${item.title}${item.source ? ` — ${item.source}` : ''}${item.published ? ` (${item.published})` : ''}${item.link ? `\n   ${item.link}` : ''}`),
       ].filter(Boolean).join('\n'));
     } catch (error) {
       blocks.push(`State: ${state}\nCurrent CM news lookup failed: ${error.message}`);
@@ -148,7 +148,7 @@ async function resolveChiefMinisterAnswer(text = '') {
       const query = `${state} current chief minister sworn in named latest`;
       const items = await fetchGoogleNewsItems(query);
       candidate = pickCandidate(items, state);
-      sourceLines = items.slice(0, 3).map((item) => `- ${item.title}${item.source ? ` â€” ${item.source}` : ''}`);
+      sourceLines = items.slice(0, 3).map((item) => `- ${item.title}${item.source ? ` — ${item.source}` : ''}`);
     } catch {
       // fall back below
     }
